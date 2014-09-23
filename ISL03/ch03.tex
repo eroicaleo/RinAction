@@ -1,0 +1,20 @@
+\documentclass{article}
+\usepackage{amsmath}
+\begin{document}
+This is for chapter 3. \\
+\begin{equation}
+RSS = (y_1 - \hat{\beta_0} - \hat{\beta_1}x_1)^2 + \dots + (y_n - \hat{\beta_0} - \hat{\beta_1}x_n)^2
+\end{equation}
+Take derivative to $\beta_0$ and $\beta_1$, and set them to 0:
+\begin{equation}
+-2(y_1 - \hat{\beta_0} - \hat{\beta_1}x_1) - \dots - 2(y_n - \hat{\beta_0} - \hat{\beta_1}x_n) = 0
+\end{equation}
+\begin{equation}
+-2(y_1 - \hat{\beta_0} - \hat{\beta_1}x_1)x_1 - \dots - 2(y_n - \hat{\beta_0} - \hat{\beta_1}x_n)x_n = 0 \label{clever}
+\end{equation}
+Simplify them, we get:
+\begin{equation}
+\sum_1^n y_i = n\hat{\beta_0} + (\sum_1^n x_i) \hat{\beta_1}
+\end{equation} \\
+Then use this one in equation \eqref{clever}, we have equation 3.4 in the section 3.1.                                                                                                     
+\end{document}
