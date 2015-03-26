@@ -12,7 +12,6 @@ Installation R
 ## http://cran.stat.ucla.edu/index.html
 deb http://cran.stat.ucla.edu/bin/linux/ubuntu utopic/
 ```
-
 2. type the following commands in your terminal
 ```bash
 gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E084DAB9
