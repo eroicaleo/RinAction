@@ -1,0 +1,159 @@
+---
+title: "The Impact of Storm on Population Health and Economic Consequences"
+date: "September 24, 2015"
+output: 
+  html_document:
+    keep_md: true
+---
+
+# Synopsis
+
+In this report, we investigate the impace of different types of weather events
+on populatoin health and economic consequences.
+We find "TORNADO" has the biggest impact on pupolation health, while "FLOOD"
+damages the property most.
+
+## 2 Data Processing
+
+We will need the `knitr` to generate the report and `dplyr` to facilitate the
+data processing.
+
+```{r setoptions, echo=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+```{r, echo=FALSE}
+if (! require(dplyr)) {
+    install.packages("dplyr")
+}
+library(dplyr)
+```
+
+We first read in the data by calling `read.csv()` function.
+Please note that I am running Rstudio on a VMware virtual machine with Ubuntu
+Linux. If I load the dataset in full through `knitr`, it would get crashed.
+So I limit the number of row to 300000.
+On the other hand, if I just load it from console, the whole dataset can be loaded.
+
+```{r readData}
+stormData <- read.csv("repdatadataStormData.csv.bz2", header = TRUE, nrows = 300000)
+```
+
+### 2.1 Data processing for population health
+
+We use the summation of "FATALITIES" and "INJURIES" as the measure for the impact
+on populatoin health. The `group_by` function inside `dplyr` are used to group
+observation based on "EVTYPE". Then we make summation with each group.
+Finally, we only choose the top 10 events which have
+biggest impact on populatio health by using `top_n` and `order` function. And only
+use them to present results.
+
+```{r population.health}
+
+health <- stormData %>%
+  group_by(EVTYPE) %>%
+  summarise(not.health = sum(FATALITIES + INJURIES)) %>%
+    top_n(10, not.health)
+
+health <- health[with(health, order(-not.health)), ]
+```
+
+### 2.2 Data processing for economic consequences
+
+Processing economic consequences is a little bit more tricky than population health.
+We found there are some empty string `""` in `stormData$PROPDMGEXP` and
+`stormData$CROPDMGEXP`. So our first step is to replace those empty strings with
+a question mark `"?"`.
+
+```{r property.damage}
+
+## replace the observation with "" in EXP to make future processing easier
+levels(stormData$PROPDMGEXP)[levels(stormData$PROPDMGEXP) == ""] <- "?"
+levels(stormData$CROPDMGEXP)[levels(stormData$CROPDMGEXP) == ""] <- "?"
+```
+
+Next we build a named vector `multiplier` to map exponent character to numeric
+value based on the course forum discussion
+[PROPDMGEXP, CROPDMGEXP, PROPDMG and CROPDMG](https://class.coursera.org/repdata-032/forum/thread?thread_id=102).
+
+```{r}
+## Make a mapping from EXP character to numerical numbers
+c1 <- c("-" = 1, "?" = 1, "+" = 1)
+c2 <- 10^as.numeric(0:9)
+num.char <- as.character(0:9)
+names(c2) <- num.char
+c3 <- c('h'=100, 'H'=100, 'k'=1000, 'K'=1000, 'm'=10^6, 'M'=10^6, 'b'=10^9, 'B'=10^9)
+multiplier <- c(c1, c2, c3)
+```
+
+Here is our mapping:
+
+```{r, echo=FALSE}
+multiplier
+```
+
+Then we use `PROPDMG * PROPDMGEXP` to represent property damage
+and `CROPDMG * CROPDMGEXP` to represent crop damage. We use the
+summation of the two variables to represent economy consequences.
+Similar to population health, we first group them based on different
+`EVTYPE` and make a summation within each group and
+only choose the top 10 events for results
+analysis and presentation.
+
+```{r}
+## Process the data
+test <- stormData %>%
+    group_by(EVTYPE) %>%
+    select(EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP) %>%
+    mutate(prop.damage = multiplier[PROPDMGEXP] * PROPDMG,
+           crop.damage = multiplier[CROPDMGEXP] * CROPDMG,
+           econ.damage = prop.damage + crop.damage) %>%
+    summarise(total.prop.damage = sum(prop.damage),
+              total.crop.damage = sum(crop.damage),
+              total.econ.damage = sum(econ.damage)) %>%
+    top_n(10, total.econ.damage)
+
+# Sort based on damage
+test <- test[with(test, order(-total.econ.damage)), ]
+total.econ.damage <- test$total.econ.damage
+```
+
+## 3. Results
+
+### 3.1 impact on population health
+
+From the figure and table below, we can clearly see
+the worst event for population health is "TORNADO".
+
+```{r show.results.health}
+barplot(height = health$not.health,
+        col = "green",
+        names.arg = health$EVTYPE,
+        las = 3,
+        main = "Total people affected by type of events",
+        ylab = "No. of people")
+```
+
+```{r results='asis'}
+library(xtable)
+xt <- xtable(health)
+print(xt, type = "html")
+```
+
+
+### 3.2 impact on economic consequences
+
+From the figure and table below, we can clearly see
+the worst event for economic consequences is "TORNADO".
+
+```{r show.results.econ}
+barplot(height = total.econ.damage, col = "red", names.arg = test$EVTYPE, las = 3,
+        main = "Total economy damage in different types of events",
+        ylab = "US dollers")
+```
+
+```{r results='asis'}
+xt <- xtable(test)
+print(xt, type = "html")
+```
