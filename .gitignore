@@ -11,3 +11,6 @@
 *.aux
 *.dvi
 *.pdf
+
+# Python note book
+.ipynb_checkpoints
