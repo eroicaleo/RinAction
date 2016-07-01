@@ -58,12 +58,13 @@ str(xff)
 
 ## `tapply`
 
-First is `tapply(x, f, g)`
+First is `tapply(x, f, g)`, it can return an array or a matrix.
 
 ```{r 6.2}
 ages <- c(25, 26, 55, 37, 21, 42)
 affils <- c("R", "D", "D", "R", "U", "D")
 tapply(ages, affils, mean)
+class(tapply(ages, affils, mean))
 ```
 
 If we have 2 factors in `tapply`, we will get a matrix.
@@ -74,5 +75,74 @@ d
 d$over25 <- ifelse(d$age > 25, 1, 0)
 d
 tapply(d$income, list(d$gender, d$over25), mean)
+class(tapply(d$income, list(d$gender, d$over25), mean))
+```
+
+## `split`
+
+returns a list.
+```{r}
+split(d$income, list(d$gender, d$over25))
+g <- c("M","F","F","I","M","M","F")
+g.split <- split(1:length(g), g)
+str(g.split)
+unclass(g.split)
+```
+
+## `by()`
+
+Function `by` is an object-oriented wrapper for tapply applied to data frames.
+
+```{r}
+aba <- read.csv("abalone.data", header = FALSE)
+names(aba) <- c("Gender", "Length", "Diameter", "Height", "Whole weight",
+                "Shucked weight", "Viscera weight", "Shell weight", "Rings")
+head(aba)
+by(data = aba, aba$Gender, FUN = function(m) lm(m[,2]~m[,3]))
+class(by(data = aba, aba$Gender, FUN = function(m) lm(m[,2]~m[,3])))
+```
+
+# 6.3 Working with tables
+
+The `table` function takes one or more object which can be interprated as factor,
+and return a contigency table.
+
+```{r}
+u <- c(22,8,33,6,8,29,-2)
+fl <- list(c(5,12,13,12,13,5,13),c("a","bc","a","a","bc","a","a"))
+tapply(u, fl, length)
+table(fl)
+class(table(fl))
+ct <- read.table("ct.dat", header = TRUE)
+ct
+cttab <- table(ct)
+cttab
+table(c(5,12,13,12,8,5))
+```
+
+# 6.4 Other factor- and table-related functions
+
+## `aggregate()`
+
+`aggregate` use `tapply` on every variable of a dataframe.
+Note that the 2nd `by` variable has to be a list.
+
+```{r aggregate}
+aba <- read.csv("abalone.data", header = FALSE)
+names(aba) <- c("Gender", "Length", "Diameter", "Height", "Whole weight",
+                "Shucked weight", "Viscera weight", "Shell weight", "Rings")
+aggregate(x = aba[,-1], by = list(aba$Gender), median)
+```
+
+## `cut()`
+
+give a data vector x and a set of bins defined by a vector b and generate a 
+
+```{r cut}
+z <- c(0.88114802, 0.28532689, 0.58647376, 0.42851862, 0.46881514,
+       0.24226859, 0.05289197, 0.88035617)
+binmarks <- seq(from=0.0, to=1.0, by=0.1)
+g <- cut(z, binmarks, labels = F)
+class(g)
 ```
 
