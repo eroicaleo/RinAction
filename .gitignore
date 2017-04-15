@@ -14,3 +14,6 @@
 
 # Python note book
 .ipynb_checkpoints
+
+# .csv files
+*.csv
