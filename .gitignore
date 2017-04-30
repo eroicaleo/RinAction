@@ -17,3 +17,5 @@
 
 # .csv files
 *.csv
+
+XGBoost/xgboost.model
