@@ -1,6 +1,7 @@
 library(tidyverse)
 library(nycflights13)
 
+## Arrange
 arrange(flights, year, month, day)
 arrange(flights, desc(arr_delay))
 
@@ -21,3 +22,16 @@ fast <- arrange(flights, desc(distance / air_time))
 ## 4
 longest <- arrange(flights, distance)
 shortest <- arrange(flights, desc(distance) )
+
+## Select
+select(flights, year, month, day)
+select(flights, year:day)
+select(flights, -(year:day))
+select(flights, starts_with("ye"), starts_with("d"), starw)
+select(flights, matches("tail"))
+rename(flights, tail_num = tailnum)
+select(flights, tailnum, everything())
+
+## Exercise
+
+## 1
