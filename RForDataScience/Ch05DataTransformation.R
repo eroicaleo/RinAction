@@ -35,3 +35,17 @@ select(flights, tailnum, everything())
 ## Exercise
 
 ## 1
+select(flights, starts_with("dep"), starts_with("arr"))
+select(flights, matches("^(dep|arr)"))
+select(flights, matches("(time|delay)$"))
+
+## 2 multiple times, just show one time.
+select(flights, dep_time, dep_time)
+
+## 3
+vars <- c("year", "month", "day", "dep_delay", "arr_delay")
+select(flights, one_of(vars))
+
+## 4
+select(flights, contains("TIME"))
+select(flights, contains("TIME", ignore.case = FALSE))
