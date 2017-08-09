@@ -1,0 +1,167 @@
+---
+title: "XGBoostTutorial"
+author: "Yang Ge"
+date: "6/19/2017"
+output: 
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+require(xgboost)
+require(Matrix)
+```
+
+The tutorial is from this page (here)[http://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html]
+
+```{r}
+data("agaricus.train", package = 'xgboost')
+data("agaricus.test", package = 'xgboost')
+train <- agaricus.train
+test <- agaricus.test
+str(train)
+str(train$data)
+class(train$data)[1]
+class(train$label)
+dim(train$data)
+dim(test$data)
+```
+
+* A little bit notes on the structure of `dgCMatrix`
+    * The following code from `dgCMatrix` is to construct a matrix column by column.
+      So the data is `c(0,0,2,1,0)`, it fills the 1st col, then 2nd, then third. The
+      2nd line would be more clear.
+    * The attr can be accessed through `attr(m, "i")`.
+    * The attr "i" is non-zero element row number, starting from the 1st col.
+    * The attr "p" is always 1 more than the column, use it to index to the attr "i".
+      p[0] is the 1st non-zero in 1st column, p[1] is the 1st non-zero in 2nd column, etc.
+
+```{r}
+(m <- Matrix(c(0,0,2:0), 3,5))
+str(m)
+(m <- Matrix(c(0,0,2:0), 5,5))
+str(m)
+(m <- Matrix(c(0,0,2:0), 7,5))
+```
+
+# Basic training using XGBoost
+
+* Important parameters need to be set.
+    * max.depth: the depth of the tree
+    * nthread: num of CPUs
+    * nrounds: how many passes on the data. Is it how many iteration in boosting?
+    * objective: logistic
+
+* The training accepts 3 input types:
+    * dgCMatrix
+    * normal dense matrix
+    * xgb.DMatrix
+
+```{r}
+bstSparse <- xgboost(data = train$data, label = train$label, max.depth = 2,
+                     eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic")
+
+bstDense <- xgboost(data = as.matrix(train$data), label = train$label, max.depth = 2,
+                     eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic")
+
+dtrain <- xgb.DMatrix(data = train$data, label = train$label)
+bstDMatrix <- xgboost(data = dtrain, max.depth = 2,
+                     eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic")
+
+```
+
+* Verbose option
+
+```{r}
+bstDMatrix <- xgboost(data = dtrain, max.depth = 2,
+                     eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic", verbose = 0)
+
+bstDMatrix <- xgboost(data = dtrain, max.depth = 2,
+                     eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic", verbose = 1)
+
+bstDMatrix <- xgboost(data = dtrain, max.depth = 2,
+                     eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic", verbose = 2)
+
+```
+
+# Basic prediction using XGBoost
+
+* XGBoost did regression, so need to transform to classification.
+
+```{r}
+pred <- predict(bstDMatrix, test$data)
+length(pred)
+head(pred)
+
+prediction <- as.numeric(pred > 0.5)
+head (prediction)
+
+err <- mean(prediction != test$label)
+print(err)
+```
+
+# Advanced featuress
+
+* `xgboost` is simple train, `xgb.train` is advance train
+* Use `watchlist` in `xgb.train`, to provide a validation set.
+* `caret` package to split data to train and validation.
+* Use `eval.metric` to monitor multiple 
+
+```{r}
+dtrain <- xgb.DMatrix(data = train$data, label = train$label)
+dtest <- xgb.DMatrix(data = test$data, label = test$label)
+
+watchlist <- list(train = dtrain, test = dtest)
+
+bst <- xgb.train(data = dtrain, max.depth = 2,
+                 eta = 1, nthread = 2, nrounds = 2, watchlist = watchlist,
+                 objective = "binary:logistic")
+
+bst <- xgb.train(data = dtrain, max.depth = 2,
+                 eta = 1, nthread = 2, nrounds = 2, watchlist = watchlist,
+                 eval.metric = "error", eval.metric = "logloss",
+                 objective = "binary:logistic")
+
+```
+
+# Linear boosting
+
+* We can change the algorithm from decision tree to linear boosting
+* It's just replacing `eta` with `booster = "gblinear"`
+
+```{r}
+bst <- xgb.train(data = dtrain, max.depth = 2,
+                 booster = "gblinear", nthread = 2, nrounds = 2, watchlist = watchlist,
+                 eval.metric = "error", eval.metric = "logloss",
+                 objective = "binary:logistic")
+```
+
+# Manipulating xgb.DMatrix
+
+* use `getinfo` to get the label from xgb.DMatrix
+```{r}
+str(dtrain)
+getinfo(dtrain, "label")
+```
+
+# View feature importance
+
+```{r}
+important_matrix <- xgb.importance(model = bst)
+print(important_matrix)
+xgb.plot.importance(importance_matrix = important_matrix)
+```
+
+# View tree
+
+* One exercise for myself, pick a couple of data point and travel through the tree.
+
+```{r}
+xgb.dump(bst, with_stats = TRUE)
+xgb.plot.tree(model = bst)
+```
+

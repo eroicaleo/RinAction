@@ -1,0 +1,11 @@
+---
+title: "XGBoostLearningTarget"
+author: "Yang Ge"
+date: "6/19/2017"
+output: html_document
+---
+
+* 20170619 - 20170625
+    * Go through the [xgboost on tutorial](https://www.kaggle.com/ammara/titanic-competition-using-xgboost/code)
+    * Use Megan's feature engineering with the above example to compare the results
+    * Try to convert the categorical variable to sparse matrix format and see the results

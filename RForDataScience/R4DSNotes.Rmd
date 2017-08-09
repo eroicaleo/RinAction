@@ -1,0 +1,126 @@
+---
+title: "R4DSNotes"
+author: "Yang Ge"
+date: "7/25/2017"
+output:
+  html_document:
+    toc: true
+---
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+```
+
+## 5.1 Introduction
+
+* filter, pick observations
+* arrange, reorder the row
+* select, pick the variables by name
+* mutate, create variable with functions of existing variables
+* summarise, Collapse many values down to a single summary
+* group_by, used in conjunction with the above, apply it on different groups
+
+Use them similarly:
+
+1. The first arg is a dataframe
+2. The subsequent arguments describe what to do with the DF, variable names without quote
+3. result is a new DF.
+
+## 5.2 filter() notes
+* If we want to both assign to a variable and print out, use ()
+* Comparison operators: `>, >=, <, <=, !=, ==`
+    * when compare numerical, use `near(sqrt(2)^2, 2)`
+* Logic operators: `&, |, !`
+    * handy shorthand: `x %in% y`
+* Almost all operations with `NA` is `NA`.
+* Filter only includes rows where the condition is `TRUE`, excludes both `NA` and `FALSE`
+
+## 5.3 arrange() notes
+* arrange() change the order of the rows.
+* use desc() to reverse the order.
+* NA is always at the end, no matter ascending or desending
+
+## 5.4 select() notes
+
+* Select couple of variables
+* Have a couple of helper functions
+    * Like `starts_with` and `matches`, see ?select_helpers
+* rename function to change variable name
+* everthing helper function to bring a variable to the front
+
+## 5.5 mutate() notes
+
+* `mutate()` can use the variable just created
+* `transmute()` only keeps the new variables
+* Useful creation functions, take in vectors and produce vectors
+    * Arithmetic operators: +/-/*/ / /^
+    * Arithmetic operators with aggregate functions: x/sum(x)
+    * module %/%, %%
+    * logs
+    * offset: lead/lag, useful in computing running difference or find when value changes.
+    * cumulative function
+    * ranking functions: min_rank() and etc. see ?min_rank
+
+## 5.6 summarise() notes
+
+* collapse a data frame to a single row
+* More useful with group_by
+* Use pipe %>% is much easier to coding and reading
+    * x %>% f(y) %>% g(z) <=> g(f(x, y), z)
+    * example here:
+
+```
+delays <- flights %>% 
+  group_by(dest) %>% 
+  summarise(
+    count = n(),
+    dist = mean(distance, na.rm = TRUE),
+    delay = mean(arr_delay, na.rm = TRUE)
+  ) %>% 
+  filter(count > 20, dest != "HNL")
+```
+
+* missing value, mean function has `na.rm`.
+    * But you can also do filter like
+
+```{r}
+not_cancelled <- flights %>%
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+```
+
+* When looking at this sort of plot, it’s often useful to filter out the groups with the smallest numbers of observations, so you can see more of the pattern and less of the extreme variation in the smallest groups.
+
+```{r, echo=FALSE}
+delays <- not_cancelled %>%
+  group_by(tailnum) %>%
+  summarise(
+    delay = mean(arr_delay, na.rm = TRUE),
+    n = n()
+  )
+delays %>%
+  filter(n > 100) %>%
+  ggplot(delays, mapping = aes(x = n, y = delay)) +
+  geom_point(alpha = 1/10)
+```
+
+### 5.6.4 Useful summary functions
+
+* locations: `mean()` and `median()`, and can be combined with logical subsetting.
+* spread: `sd(), IQR(), mad(x)`
+* rank: `min(x), max(x), quantile(x, 0.25)`
+* position: `first(), nth(x, 2), last()`
+    * These can be complementary to filtering on ranks.
+* count: `n(), n_distinct(), count()`
+    * count can add a weight `count(tailnum, wt = distance)`.
+* counts and proportions of logical values: `sum(x) > 10`, `mean(y == 0)`.
+
+### 5.6.5 Grouping by multiple variables
+
+* When you group by multiple variables, each summary peels off one level of the grouping.
+* remove group by 'ungroup'
+
+# Tricks and tips from R4DS
+
+`Cmd+Alt+P`: resend the last executed chunk
+
