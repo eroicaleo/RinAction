@@ -19,3 +19,5 @@
 *.csv
 
 XGBoost/xgboost.model
+
+Kaggle/Titanic/xgboost.model

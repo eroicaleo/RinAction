@@ -120,6 +120,11 @@ delays %>%
 * When you group by multiple variables, each summary peels off one level of the grouping.
 * remove group by 'ungroup'
 
+## 5.7 Grouped mutates (and filters)
+
+* grouping can be also used with `mutate()` and `filter()`.
+* window functions work most naturelly in grouped mutates and filters. Try `vignette("window-functions")`.
+
 # Tricks and tips from R4DS
 
 `Cmd+Alt+P`: resend the last executed chunk
