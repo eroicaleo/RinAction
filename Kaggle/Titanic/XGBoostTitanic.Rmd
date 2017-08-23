@@ -1,0 +1,80 @@
+---
+title: "XGBoostTitanic"
+author: "Yang Ge"
+date: "8/13/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+require(xgboost)
+require(tidyverse)
+require(Matrix)
+set.seed(20121228)
+train <- read.csv("train.csv")
+test <- read.csv("test.csv")
+str(train)
+```
+
+# Try to convert just the "Sex" column to matrix
+
+* We can see that no matter how to change the `nrounds`, the train error stays the same.
+* My 1st step is to find out how to link the leaf and prediction number in debug mode.
+
+```{r}
+is_female <- as.numeric(train$Sex) - 1
+is_female_m <- as.matrix(is_female)
+# str(is_female_m)
+dtrain <- xgb.DMatrix(data = is_female_m, label = train$Survived)
+# str(dtrain)
+bstDMatrix_02 <- xgboost(data = dtrain, max.depth = 2,
+                     eta = 1, nthread = 2, nrounds = 1, objective = "binary:logistic")
+# bstDMatrix_10 <- xgboost(data = dtrain, max.depth = 2,
+#                      eta = 1, nthread = 2, nrounds = 10, objective = "binary:logistic")
+
+xgb.plot.tree(model = bstDMatrix_02)
+
+xgb.dump(bstDMatrix_02, with_stats = TRUE)
+
+pred <- predict(bstDMatrix_02, is_female_m)
+compare <- cbind(is_female_m, train$Survived, pred)
+```
+
+# Next, try to convert the "Sex" and "Pclass" to matrix
+
+* Note that no `NA` is in the pclass
+* I would like to find out whether make it a normal matrix or a sparse matrix would make
+  any difference
+
+```{r}
+pclass <- train$Pclass - 1
+sex_pclass <- as.matrix(cbind(is_female, pclass))
+dtrain <- xgb.DMatrix(data = sex_pclass, label = train$Survived)
+bstDMatrix_02 <- xgboost(data = dtrain, max.depth = 3,
+                     eta = 0.1, nthread = 2, nrounds = 5, objective = "binary:logistic")
+
+v <- pclass
+m <- numeric(length(v))
+m[v == 0] <- 1
+for (i in seq(1 + min(v), max(v))) {
+  m0 <- numeric(length(v))
+  m0[v == i] <- 1
+  m <- cbind(m, m0)
+}
+m_matrix <- as.matrix(m)
+colnames(m_matrix) <- c("P0", "P1", "P2")
+sex_pclass <- cbind(is_female, m_matrix)
+dtrain <- xgb.DMatrix(data = sex_pclass, label = train$Survived)
+bstDMatrix_02 <- xgboost(data = dtrain, max.depth = 2,
+                     eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic")
+
+important_matrix <- xgb.importance(model = bstDMatrix_02)
+print(important_matrix)
+xgb.plot.importance(importance_matrix = important_matrix)
+
+xgb.dump(bstDMatrix_02, with_stats = TRUE)
+```
+

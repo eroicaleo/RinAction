@@ -11,6 +11,7 @@ output:
 library(tidyverse)
 library(nycflights13)
 ```
+# 5 Data transformation
 
 ## 5.1 Introduction
 
@@ -125,7 +126,54 @@ delays %>%
 * grouping can be also used with `mutate()` and `filter()`.
 * window functions work most naturelly in grouped mutates and filters. Try `vignette("window-functions")`.
 
+# 6 Workflow: scripts
+
+## 6.1 Running code
+
+* `Cmd+Enter` to run the current line
+* `Cmd+Shift+S` to run the current script
+* never put `install.package()` or `setwd()` in the script to share with others.
+
+# 7 Exploratory Data Analysis
+
+## 7.1 Introduction
+
+EDA means to use visualization and transformation to explore your data in a systematic way.
+EDA iterations have the following 3 steps:
+
+* Generate questions about your data
+* Search for answers by visualizing, transforming, and modeling your data
+* Use what you learn to refine your questions and/or generate new questions
+
+## 7.2 Questions
+
+* The key to ask quality question is to generate a large quantity of questions.
+* Each new question expose you to a new aspect and increase your chance of making a discovery.
+* Two types of questions will always be useful:
+    * What kind of variation occur within my variable?
+    * what type of covariation occurs between my variables?
+
+* Variable: quantity/quality/property that you can measure
+* Value: state of a variable when you measure it
+* Observation: a set of measurements. An observation contain several values, each
+  associated with a different variable. Will also refer as data points.
+* Tabular data: a set of values, each associated with a variable and an observation.
+
+## 7.3 Variation
+
+* The best way to understand variation is to visualize distribution.
+
+### 7.3.1 Visualising distributions
+
+* To examine the distribution of a categorical variable, use a bar chart.
+    * visual: `geom_bar`, data, `count`
+* To examine the distribution of a continuous variable, use a histogram.
+    * visual: `geom_histogram`, data, `count(cut_width())`
+
 # Tricks and tips from R4DS
 
-`Cmd+Alt+P`: resend the last executed chunk
+* `Cmd+Alt+P`: resend the last executed chunk
+* "https://twitter.com/rstudiotips" to look for tips.
+* "https://support.rstudio.com/hc/en-us/articles/205753617-Code-Diagnostics" to find out 
+  common mistakes Rstudio will report.
 
