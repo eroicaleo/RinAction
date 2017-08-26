@@ -1,0 +1,120 @@
+---
+title: "XGBoostCLITutorial"
+author: "Yang Ge"
+date: "8/23/2017"
+output:
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Compile
+
+* Follow the step [here](https://github.com/dmlc/xgboost/blob/master/doc/build.md#building-on-osx)
+* Since I'd like to use debugger, I use the following step: `cd xgboost; cp make/minimum.mk ./config.mk; echo "TEST_COVER = 1" >> ./config.mk; make -j4`
+* Invoke the debugger in Mac os: `lldb ./xgboost`
+
+# Demo example
+
+* Demo is [here](https://github.com/dmlc/xgboost/blob/master/demo/binary_classification/README.md)
+* Try to run the script `./runexp.sh` under `demo/binary_classification`, but got
+  "Segmentation fault: 11"
+
+# Titanic example
+
+## Experiments with only the "Sex" variable
+
+* After running `./runexp.sh`, there will be a couple of `agaricus*` files generated under
+  `demo/binary_classification` dir.
+* First need to build a train data set like `agaricus.txt.train`.
+* Assume the titanic data set `train.csv` and `test.csv` have been downloaded from kaggle.
+* The following piece generates the required format.
+
+```{r}
+train <- read.csv("train.csv")
+
+gen_data <- function(raw_data) {
+  is_male <- as.numeric(train$Sex) - 1
+  is_male_m <- as.matrix(is_male)
+  min_data <- cbind(raw_data$Survived, is_male_m)
+  colnames(min_data) <- c("Survived", "is_male")
+  return(min_data)
+}
+
+proc_row <- function(x) {
+  label <- x[1]
+  feats <- x[-1]
+  index <- which(feats != 0, arr.ind = T)
+  curr <- as.character(label)
+  for (i in index) {
+    next_feat <- paste(i, feats[i], sep = ":")
+    curr <- paste(curr, next_feat, sep = " ")
+  }
+  return(curr)
+}
+# a <- c(1,1)
+# debug(proc_row)
+# proc_row(a)
+
+out_data <- function(raw_data, filename) {
+  file_out <- file(filename)
+  new_data <- apply(raw_data, 1, proc_row)
+  writeLines(new_data, file_out)
+  close(file_out)
+}
+
+# debug(out_data)
+dtrain <- gen_data(train)
+out_data(dtrain, "titanic.txt.train")
+
+```
+
+* copy the `mushroom.conf` config file to `titanic.conf` and do the following changes
+  to keep things simple:
+    1. `max_depth` to 2
+    2. `num_round` to 1
+    3. `data, eval[test], test:data` all to `"titanic.txt.train"`
+* Run the training process `$XGBOOST_HOME/xgboost titanic.conf`, a model is generated called
+  `0001.model`
+* To visualize the model, create a "titanic_featmap.txt".
+    * `echo "0 is_male i" > titanic_featmap.txt`
+    * `$XGBOOST_HOME/xgboost titanic.conf task=dump model_in=0001.model fmap=titanic_featmap.txt name_dump=dump.nice`
+* To debug the prediction process
+    * `lldb $XGBOOST_HOME/xgboost titanic.conf task=pred model_in=0001.model`
+    * The command of lldb is [here](http://lldb.llvm.org/lldb-gdb.html)
+    * Still have the segmentation fault
+
+### Debug the segmentation fault
+
+* The following shows the call stack.
+
+```
+* thread #1: tid = 0x3d80, 0x0000000100463450 xgboost`xgboost::gbm::GBTree::PredictBatch(this=0x00000001020036a0, p_fmat=0x00000001020035e0, out_preds=0x00007fff5fbfdae8 size=0, ntree_limit=0) + 96 at gbtree.cc:217, queue = 'com.apple.main-thread', stop reason = step in
+  * frame #0: 0x0000000100463450 xgboost`xgboost::gbm::GBTree::PredictBatch(this=0x00000001020036a0, p_fmat=0x00000001020035e0, out_preds=0x00007fff5fbfdae8 size=0, ntree_limit=0) + 96 at gbtree.cc:217
+    frame #1: 0x00000001001238eb xgboost`xgboost::LearnerImpl::PredictRaw(this=0x0000000101706010, data=0x00000001020035e0, out_preds=0x00007fff5fbfdae8 size=0, ntree_limit=0) const + 1051 at learner.cc:530
+    frame #2: 0x00000001000eb94f xgboost`xgboost::LearnerImpl::Predict(this=0x0000000101706010, data=0x00000001020035e0, output_margin=false, out_preds=0x00007fff5fbfdae8 size=0, ntree_limit=0, pred_leaf=false, pred_contribs=false) const + 767 at learner.cc:434
+    frame #3: 0x0000000100016650 xgboost`xgboost::CLIPredict(param=0x00007fff5fbfe8f8) + 7920 at cli_main.cc:328
+    frame #4: 0x000000010001cee2 xgboost`xgboost::CLIRunTask(argc=4, argv=0x00007fff5fbff9c0) + 16642 at cli_main.cc:369
+    frame #5: 0x000000010001fde4 xgboost`main(argc=4, argv=0x00007fff5fbff9c0) + 84 at cli_main.cc:377
+    frame #6: 0x00007fff8a0cc5ad libdyld.dylib`start + 1
+```
+
+* The `predictor` variable is `null`. The next step would be to find out why.
+
+```
+(lldb) p predictor
+(std::__1::unique_ptr<xgboost::Predictor, std::__1::default_delete<xgboost::Predictor> >) $3 = {
+  __ptr_ = {
+    std::__1::__libcpp_compressed_pair_imp<xgboost::Predictor *, std::__1::default_delete<xgboost::Predictor>, 2> = {
+      __first_ = 0x0000000000000000
+    }
+  }
+}
+```
+
+* I put a temporary fix [here](https://github.com/dmlc/xgboost/issues/created_by/eroicaleo)
+  seems to be able to get rid of segmentation fault. Hopefully someone from the community
+  can reply and confirm.
