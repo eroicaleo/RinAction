@@ -118,3 +118,12 @@ out_data(dtrain, "titanic.txt.train")
 * I put a temporary fix [here](https://github.com/dmlc/xgboost/issues/created_by/eroicaleo)
   seems to be able to get rid of segmentation fault. Hopefully someone from the community
   can reply and confirm.
+  
+### The relation betweent the tree leaf and final prediction value (1 tree)
+
+* `obj_->PredTransform` in `xgboost::LearnerImpl::Predict` will do the transformation
+  and it will eventually go to the `xgboost::obj::LogisticRegression::PredTransform`,
+  we can see it's just $1 / (1 + exp(-x))$
+  
+### The relation betweent the tree leaf and final prediction value (2 trees and more)
+
