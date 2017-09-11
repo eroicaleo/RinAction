@@ -169,6 +169,49 @@ EDA iterations have the following 3 steps:
     * visual: `geom_bar`, data, `count`
 * To examine the distribution of a continuous variable, use a histogram.
     * visual: `geom_histogram`, data, `count(cut_width())`
+* To overlay multiple histograms, use `geom_freqpoly` and use maybe `mapping = aes(colour = cut)`
+* Now we know the variation, what's next? Good questions will be to rely on your curiosity
+  and skepticism.
+  
+### 7.3.2 Typical values
+
+* Which values are the most common? Why?
+* Which values are rare? Why? Does that match your expectations?
+* Can you see any unusual patterns? What might explain them?
+
+### 7.3.3 Unusual values
+
+* Sometimes they are data entry errors
+* Sometimes outliers suggest important new science.
+* The outliers might be hard to see in a histogram.
+    * Use `coord_cartesian(xlim = , ylim = )`
+    * The `xlim()` and `ylim()` in ggplot2 throws away the data outside the limit.
+* If outliers have substantial impact on your data, we shouldn't remove them
+  without justification. If we need to figure out what caused them and disclose them.
+  
+## 7.4 Missing values
+
+* 2 ways to deal with strange values
+* Drop the entire row: `filter(between(y, 3, 20))`, not recommended
+* Mark them as `NA`: `mutate(y = ifelse(y < 3 | y > 20, NA, y))`, recommended
+* `ggplot` won't let the `NA` go silently, will give warnings. `na.rm = TRUE` to suppress.
+
+## 7.5 Covariation
+
+* The best way to spot covariation is to visualize the relationship between two or more variables.
+
+### One continuous and 1 categorical
+
+* `geom_freqpoly` is not that useful because if one group is much smaller than the other, then
+  it's hard to see.
+* The better way is to display density instead of count
+* Another way is to use boxplot
+    * A box stretches from 25% to 75% (IQR)
+    * There is a line in the middle for median
+    * Visual points for 1.5 of IQR
+    * A line for non-outlier
+* For non-ordered categorical variable, can use `reorder` to order them:
+  `reorder(class, hwy, FUN = median)`
 
 # Tricks and tips from R4DS
 
