@@ -127,3 +127,113 @@ out_data(dtrain, "titanic.txt.train")
   
 ### The relation betweent the tree leaf and final prediction value (2 trees and more)
 
+* Use the following command to train the model:
+    * Modify the `num_round = 2`
+    * `$XGBOOST_HOME/xgboost titanic.conf.2`
+* Dump the model:
+    * `$XGBOOST_HOME/xgboost titanic.conf.2 task=dump model_in=0002.model fmap=titanic_featmap.txt name_dump=dump.nice.2` and the tree is like the following:
+
+```
+booster[0]:
+0:[f1<-9.53674e-07] yes=1,no=2,missing=1
+	1:leaf=0.955975
+	2:leaf=-1.2358
+booster[1]:
+0:[f1<-9.53674e-07] yes=1,no=2,missing=1
+	1:leaf=0.096795
+	2:leaf=-0.205787
+```
+
+* Make the prediction:
+    * `$XGBOOST_HOME/xgboost titanic.conf.2 task=pred model_in=0002.model`
+* There are two values in `pred.txt`, 0.1913 and 0.741306.
+* It's the summation of leaf values and apply `sigmoid` function.
+
+
+```{r}
+1 / ( 1 + exp(1.2358 + 0.205787) )
+1 / ( 1 + exp( - 0.955975 - 0.096795) )
+```
+
+### Will the $\eta$ impact the prediction equation?
+
+* Use the following command to train the model:
+    * Modify the `eta = 0.5`
+    * `$XGBOOST_HOME/xgboost titanic.conf.2`
+* Dump the model:
+    * `$XGBOOST_HOME/xgboost titanic.conf.2 task=dump model_in=0002.model fmap=titanic_featmap.txt name_dump=dump.nice.2` and the tree is like the following:
+
+```
+booster[0]:
+0:[f1<-9.53674e-07] yes=1,no=2,missing=1
+	1:leaf=0.477987
+	2:leaf=-0.6179
+booster[1]:
+0:[f1<-9.53674e-07] yes=1,no=2,missing=1
+	1:leaf=0.260545
+	2:leaf=-0.351817
+```
+
+* Make the prediction:
+    * `$XGBOOST_HOME/xgboost titanic.conf.2 task=pred model_in=0002.model`
+* There are two values in `pred.txt`, 0.274937 and 0.676675.
+* Then the $\eta$ doesn't affect the prediction value. I should have review the theory
+  of GBT ...
+
+```{r}
+1 / ( 1 + exp(0.6179 + 0.351817) )
+1 / ( 1 + exp( - 0.477987 - 0.260545) )
+```
+
+## Experiments with only the "Sex" variable and "Pclass" variable
+
+```{r}
+train <- read.csv("train.csv")
+
+pclass <- train$Pclass - 1
+v <- pclass
+m <- numeric(length(v))
+m[v == 0] <- 1
+for (i in seq(1 + min(v), max(v))) {
+  m0 <- numeric(length(v))
+  m0[v == i] <- 1
+  m <- cbind(m, m0)
+}
+m_matrix <- as.matrix(m)
+colnames(m_matrix) <- c("P0", "P1", "P2")
+
+is_male <- as.numeric(train$Sex) - 1
+is_male_m <- as.matrix(is_male)
+min_data <- cbind(train$Survived, is_male_m)
+colnames(min_data) <- c("Survived", "is_male")
+
+dtrain <- cbind(min_data, m_matrix)
+
+proc_row <- function(x) {
+  label <- x[1]
+  feats <- x[-1]
+  index <- which(feats != 0, arr.ind = T)
+  curr <- as.character(label)
+  for (i in index) {
+    next_feat <- paste(i, feats[i], sep = ":")
+    curr <- paste(curr, next_feat, sep = " ")
+  }
+  return(curr)
+}
+
+out_data <- function(raw_data, filename) {
+  file_out <- file(filename)
+  new_data <- apply(raw_data, 1, proc_row)
+  writeLines(new_data, file_out)
+  close(file_out)
+}
+
+out_data(dtrain, "titanic.txt.train.sex_pclass")
+```
+
+* Run the training process `$XGBOOST_HOME/xgboost titanic.conf.sex_pclass`, a model is generated called
+  `0001.model`
+* `$XGBOOST_HOME/xgboost titanic.conf.sex_pclass task=dump model_in=0001.model fmap=titanic_featmap.txt name_dump=dump.nice.sex_pclass` and the tree is like the following:
+
+## Find the re-weighting procedures
+
