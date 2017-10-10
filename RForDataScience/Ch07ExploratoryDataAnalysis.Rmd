@@ -1,0 +1,184 @@
+---
+title: "Ch07ExploratoryDataAnalysis"
+author: "Yang Ge"
+date: "10/5/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## 7.5 Covariations
+
+### 7.5.2 Two categorical variables
+
+```{r}
+ggplot(data = diamonds) +
+  geom_count(mapping = aes(x = cut, y = color))
+```
+```{r}
+diamonds %>%
+  count(color, cut)
+
+diamonds %>%
+  count(color, cut) %>%
+  ggplot(mapping = aes(x = color, y = cut)) +
+  geom_tile(mapping = aes(fill = n))
+
+```
+
+#### 7.5.2.1 Exercises
+
+1. How could you rescale the count dataset above to more clearly show the
+    distribution of cut within colour, or colour within cut?
+
+* Just needs to use create a new varible, `n/sum(n)`
+
+```{r}
+diamonds %>%
+  count(color, cut) %>%
+  mutate(density = n / sum(n), sum = sum(n))
+```
+
+2. Use geom_tile() together with dplyr to explore how average flight delays 
+   vary by destination and month of year. What makes the plot difficult to read?
+   How could you improve it?
+   
+* I think one reason for hard to read is there are so many distinations.
+* Question, I don't have good answers for the 2nd part. Maybe we can divide the destination
+  according to their first letter?
+
+```{r}
+library(nycflights13)
+flights
+flights %>%
+  group_by(dest, month) %>%
+  summarise(mean = mean(arr_delay, na.rm = TRUE)) %>%
+  filter(dest < "B")
+
+flights %>%
+  group_by(dest, month) %>%
+  summarise(mean = mean(arr_delay, na.rm = TRUE)) %>%
+  ggplot(mapping = aes(x = month, y = dest)) +
+  geom_tile(mapping = aes(fill = mean))
+```
+
+3. Why is it slightly better to use aes(x = color, y = cut) rather than
+    aes(x = cut, y = color) in the example above?
+    
+* aes(x = color, y = cut) looks pretty than aes(x = cut, y = color) ...
+
+```{r}
+diamonds %>%
+  count(color, cut) %>%
+  ggplot(mapping = aes(x = cut, y = color)) +
+  geom_tile(mapping = aes(fill = n))
+```
+
+### 7.5.3 Two continuous variables
+
+```{r}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = carat, y = price))
+```
+
+```{r}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = carat, y = price), alpha = 0.1)
+```
+
+* use `geom_bin2d`, `geom_hex`
+
+```{r}
+smaller <- diamonds %>%
+  filter(carat < 3)
+ggplot(data = smaller) +
+  geom_bin2d(mapping = aes(x = carat, y = price))
+
+# install.packages("hexbin")
+ggplot(data = smaller) +
+  geom_hex(mapping = aes(x = carat, y = price))
+
+```
+
+* bin one variable
+
+```{r}
+ggplot(data = smaller, mapping = aes(x = carat, y = price)) +
+  geom_boxplot(mapping = aes(group = cut_width(carat, 0.1)))
+
+ggplot(data = smaller, mapping = aes(x = carat, y = price)) +
+  geom_boxplot(mapping = aes(group = cut_width(carat, 0.1)), varwidth = TRUE)
+
+ggplot(data = smaller, mapping = aes(x = carat, y = price)) +
+  geom_boxplot(mapping = aes(group = cut_number(carat, 20)))
+```
+
+#### 7.5.3.1 Exercises
+
+1. Instead of summarising the conditional distribution with a boxplot,
+  you could use a frequency polygon. What do you need to consider when
+  using cut_width() vs cut_number()? How does that impact a visualisation
+  of the 2d distribution of carat and price?
+
+* For `cut_width()`, it needs to choose correct `width, center` to get reasonable # of plots.
+* For `cut_number`, it needs to choose good `n`.
+
+```{r}
+ggplot(data = smaller, mapping = aes(x = price, y = ..density..)) +
+  geom_freqpoly(mapping = aes(color = cut_width(carat, 1, center = 0.5)), binwidth = 500)
+
+ggplot(data = smaller, mapping = aes(x = price, y = ..density..)) +
+  geom_freqpoly(mapping = aes(color = cut_number(carat, 5)), binwidth = 500)
+
+```
+
+* Visualise the distribution of carat, partitioned by price.
+
+```{r}
+ggplot(data = diamonds, mapping = aes(x = price, y = carat)) +
+  geom_boxplot(mapping = aes(group = cut_width(price, 1000)))
+```
+
+* How does the price distribution of very large diamonds compare to small diamonds.
+  Is it as you expect, or does it surprise you?
+  
+* I don't suprise.
+
+```{r}
+small_verylarge <- diamonds %>%
+  filter(carat < 1.0 | carat >= 2.5) %>%
+  mutate(label = ifelse(carat < 1.0, "small", "verylarge"))
+
+ggplot(data = small_verylarge, mapping = aes(x = price, y = ..density..)) +
+  geom_freqpoly(mapping = aes(color = label))
+```
+
+4. Combine two of the techniques you’ve learned to visualise the combined distribution of cut, carat, and price.
+
+* cut is a categorical variable, carat and price are continuous variable
+  The following is one way that I can come up with, the trick is to use `x = cut_width(carat, 0.5)` rather
+  than `x = carat`.
+
+```{r}
+smaller <- diamonds %>%
+  filter(carat < 3)
+ggplot(data = smaller, mapping = aes(x = cut_width(carat, 0.5), y = price, color = cut)) +
+  geom_boxplot(mapping = aes(color = cut))
+```
+
+5. Two dimensional plots reveal outliers that are not visible in one dimensional plots. For example,
+    some points in the plot below have an unusual combination of x and y values, which makes the points
+    outliers even though their x and y values appear normal when examined separately.
+    Why is a scatterplot a better display than a binned plot for this case?
+
+* The outliers has crystallized in the following figure because it shows the relation between x and y.
+
+```{r}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = x, y = y)) +
+  coord_cartesian(xlim = c(4, 11), ylim = c(4, 11))
+```
+

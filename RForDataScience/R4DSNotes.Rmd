@@ -200,7 +200,7 @@ EDA iterations have the following 3 steps:
 
 * The best way to spot covariation is to visualize the relationship between two or more variables.
 
-### One continuous and 1 categorical
+### 7.5.1 One continuous and 1 categorical
 
 * `geom_freqpoly` is not that useful because if one group is much smaller than the other, then
   it's hard to see.
@@ -212,6 +212,24 @@ EDA iterations have the following 3 steps:
     * A line for non-outlier
 * For non-ordered categorical variable, can use `reorder` to order them:
   `reorder(class, hwy, FUN = median)`
+* Some other functions useful for this case
+    * `geom_boxploth` from `ggstance` package
+    * `geom_lv` from `lvplot` package
+    * `geom_jitter` and `ggbeeswarm` package
+
+### 7.5.2 Two categorical variables
+
+* Count the number of observations for each combination: `geom_count`
+* Another way is to use 'dplyr::count' + 'geom_tile'
+
+### 7.5.3 Two continuous variables
+
+* `geom_point`, not good when dataset grows, points overplot. use `alpha`
+* Another way is to use bin, previously `geom_histogram` and `geom_freqpoly`
+  Now will use `geom_bin2d`, `geom_hex`.
+* 3rd way is to bin one continuous variable and then use 7.5.1:
+    * `geom_boxplot(mapping = aes(group = cut_width(carat, 0.1)))`
+    * `geom_boxplot(mapping = aes(group = cut_number(carat, 20)))`
 
 # Tricks and tips from R4DS
 
