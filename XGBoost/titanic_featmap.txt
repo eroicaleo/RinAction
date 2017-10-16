@@ -1,0 +1,5 @@
+0 P0      i
+1 is_male i
+2 P1      i
+3 P2      i
+4 P3      i
