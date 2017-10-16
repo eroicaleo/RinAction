@@ -231,6 +231,24 @@ EDA iterations have the following 3 steps:
     * `geom_boxplot(mapping = aes(group = cut_width(carat, 0.1)))`
     * `geom_boxplot(mapping = aes(group = cut_number(carat, 20)))`
 
+## 7.6 Patterns and models
+
+* pattern is systematic relationship between two variables.
+* Need to ask the following questions:
+    * Could this pattern be due to conincidence (random chance)?
+    * How can you describe the relationship implied by the pattern?
+    * How strong is the relationship implied by the pattern?
+    * What other variables might affect the relationship?
+    * Does this relationship change if you look at individual subgroups of the data?
+* Variation is a phenomenon to create uncertainty, then covariation is to reduce it.
+    * two variables vary, then use one variable to make better prediction on the second
+    * if causal relation, then use one variable to control the 2nd.
+* Models are a tool to extract patterns.
+    * It's hard to understand cut and price, because cat and carat, carat and price
+      are tightly coupled.
+    * So we use a model to remove very strong relation between price and carat.
+
+
 # Tricks and tips from R4DS
 
 * `Cmd+Alt+P`: resend the last executed chunk

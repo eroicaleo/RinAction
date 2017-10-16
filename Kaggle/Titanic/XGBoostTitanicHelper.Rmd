@@ -1,0 +1,32 @@
+---
+title: "XGBoostTitanicHelper"
+author: "Yang Ge"
+date: "10/8/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+set.seed(20121228)
+train <- read.csv("train.csv")
+```
+
+```{r}
+# This function only takes integer features
+xgboost_input_format <- function(feature) {
+  feature_name <- names(feature)
+  v <- feature - min(feature)
+  m <- numeric(length(v))
+  m[v == 0] <- 1
+  for (i in seq(1, max(v))) {
+    m0 <- numeric(length(v))
+    m0[v == i] <- 1
+    m <- cbind(m, m0)
+  }
+  m
+}
+```
+

@@ -182,3 +182,27 @@ ggplot(data = diamonds) +
   coord_cartesian(xlim = c(4, 11), ylim = c(4, 11))
 ```
 
+## 7.6 Patterns and models
+
+```{r}
+ggplot(data = faithful) +
+  geom_point(mapping = aes(x = eruptions, y = waiting))
+```
+
+* model
+
+```{r}
+library(modelr)
+mod <- lm(log(price) ~ log(carat), data = diamonds)
+diamonds2 <- diamonds %>%
+  add_residuals(mod) %>%
+  mutate(resid = exp(resid))
+ggplot(data = diamonds2) +
+  geom_point(mapping = aes(x = carat, y = resid))
+```
+
+```{r}
+ggplot(data = diamonds2) +
+  geom_boxplot(mapping = aes(x = cut, y = resid))
+```
+
