@@ -1,0 +1,36 @@
+---
+title: "Ch10Tibbles"
+author: "Yang Ge"
+date: "10/19/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## 10.2 Creating tibbles
+
+```{r}
+iris
+iris_tibble <- as_tibble(iris)
+iris_tibble
+class(iris_tibble)
+class(iris)
+
+tibble(
+  x = 1:5,
+  y = 1,
+  z = x ^ 2 + 1
+)
+
+# The following won't work
+# tibble(
+# x = 1:5,
+# y = 1,
+# z = x ^ 2 + 1
+# )
+
+```
+

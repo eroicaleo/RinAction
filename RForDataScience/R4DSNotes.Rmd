@@ -248,6 +248,61 @@ EDA iterations have the following 3 steps:
       are tightly coupled.
     * So we use a model to remove very strong relation between price and carat.
 
+## 7.7 ggplot2 calls
+
+* know them by heart
+    * fist 2 arguments to `ggplot` are `data` and `mapping`.
+    * fist 2 arguments to `aes` are `x` and `y`.
+
+# 8 Workflow: projects
+
+* Need to make two decisions
+* What will you save as your lasting record of what happened?
+* Where does your analysis "live"?
+
+## 8.2 Where does your analysis live?
+
+* `getcw()` to get current directory.
+* `setcw()` is not recommended
+
+## 8.3 Paths and directories
+
+* Use `/` for paths even in windows platform
+* Never use absolute path
+* `~` in Windows doesn't point to home dir but to document dir.
+
+# 9. Wrangle Introduction
+
+* Wrangle means: getting data into R in a useful format. Has 3 parts:
+* tibbles: what's the different with dataframe
+* data import: get data from disk into R
+* tidy data: storing data to make transformation, visualization and modeling easier
+* Data transformation: Relational data/Strings/Factors/Date and times
+
+# 10 Tibbles
+
+## 10.1 Introduction
+
+* To learn more about tibbles: `vignette("tibble")`
+
+## 10.2 Creating tibbles
+
+* To convert dataframe to tibble: `as_tibble(iris)`
+* Or directly use `tibble`, note the dimension has to be matching, or one can be a vector,
+  others have to be single numbers.
+
+```
+tibble(
+  x = 1:5,
+  y = 1,
+  z = x ^ 2 + 1
+)
+```
+
+* Compare to dataframe, tibble never
+    * change the type of inputs
+    * change the names of variables
+    * never creates row names
 
 # Tricks and tips from R4DS
 
@@ -255,4 +310,10 @@ EDA iterations have the following 3 steps:
 * "https://twitter.com/rstudiotips" to look for tips.
 * "https://support.rstudio.com/hc/en-us/articles/205753617-Code-Diagnostics" to find out 
   common mistakes Rstudio will report.
-
+* Recommanded books from authors for exploratory data analysis
+    * 'ggplot2: Elegant Graphics for Data Analysis'
+    * [R Graphics Cookbook](http://www.cookbook-r.com/Graphs/)
+    * Graphical Data Analysis with R
+* restart and rerun script
+    * restart R session: `Cmd/Ctrl+Shift+F10`
+    * rerun current script: `Cmd/Ctrl+Shift+S`

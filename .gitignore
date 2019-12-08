@@ -26,3 +26,5 @@ Kaggle/Titanic/xgboost.model
 RForDataScience/Ch07ExploratoryDataAnalysis.html
 
 RForDataScience/R4DSNotes.html
+
+*.model
